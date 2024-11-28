@@ -14,6 +14,10 @@ const api = axios.create({
 });
 
 async function authenticate () {
+    /*  
+        Orange money authentication
+        return access_token with a validity of 5 mn
+    */
     try{
         const credentials = {'client_id': process.env.OM_CLIENT_ID, 'client_secret': process.env.OM_CLIENT_SECRET, 'grant_type': 'client_credentials'}
         const request = await axios.post(process.env.OM_BASE_URL+"/oauth/token", credentials, {headers: { 'Content-Type': 'application/x-www-form-urlencoded'}})
@@ -49,6 +53,17 @@ const encrypt_pin = async (pin) => {
 }
 
 async function make_cash_in(sender_number, customer_number, amount, encrypted_pin, transaction_id) {
+    /*  
+        Orange money make a cash in 
+        params:
+            senderNumber <string> :  MISDN of the sender 
+            customerNumber <string> : string MISDN of the customer
+            amount <double> : amount to send 
+            encryptedPin <string> : rsa encoded pin of the sender 
+            transactionId <string> : transactionId of the intern process
+        returns :
+            response <dict> : status response of process
+  */
     const token = await authenticate()
     console.log(`Token ${token}`)
     try{

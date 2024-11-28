@@ -2,6 +2,10 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 Future<String?> authenticate() async {
+  /*  
+    Orange money authentication
+    return access_token with a validity of 5 mn
+  */
   try {
     final credentials = {
       'client_id': const String.fromEnvironment('OM_CLIENT_ID'),
@@ -24,6 +28,17 @@ Future<String?> authenticate() async {
 }
 
 Future<void> makeCashIn(String senderNumber, String customerNumber, double amount, String encryptedPin, String transactionId) async {
+   /*  
+    Orange money make a cash in 
+    params:
+        senderNumber <string> :  MISDN of the sender 
+        customerNumber <string> : string MISDN of the customer
+        amount <double> : amount to send 
+        encryptedPin <string> : rsa encoded pin of the sender 
+        transactionId <string> : transactionId of the intern process
+    returns :
+        response <dict> : status response of process
+  */
   final token = await authenticate();
   print('Token $token');
   try {
@@ -57,6 +72,7 @@ Future<void> makeCashIn(String senderNumber, String customerNumber, double amoun
 
     if (response.statusCode == 200) {
       print(jsonDecode(response.body));
+      return jsonDecode(response.body)
     } else {
       print('Error: ${response.statusCode}');
     }

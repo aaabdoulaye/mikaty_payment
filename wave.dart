@@ -2,6 +2,12 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 Future<String?> checkoutSession(int amount, {String? aggregatedMerchantId}) async {
+ /* 
+    send checkout session 
+    params: 
+        amount <int>: amount to send 
+        aggregatedMerchantId <string> : Optional merchand id
+*/
   var params = {
     "amount": amount,
     "currency": "XOF",

@@ -6,6 +6,12 @@ dotenv.config();
 const api_key = process.env.WAVE_SECRET;
 
 async function checkout_session  (amount, aggregated_merchant_id=null){
+    /* 
+        send checkout session 
+        params: 
+            amount <int>: amount to send 
+            aggregatedMerchantId <string> : Optional merchand id
+    */
     let params = {"amount": amount, currency: "XOF", error_url:process.env.WAVE_ERROR_URL, success_url:process.env.WAVE_SUCCESS_URL}
     if (aggregated_merchant_id !== null){
         params["aggregated_merchant_id"] = aggregated_merchant_id
