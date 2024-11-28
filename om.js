@@ -52,30 +52,69 @@ const encrypt_pin = async (pin) => {
     }
 }
 
-async function make_cash_in(sender_number, customer_number, amount, encrypted_pin, transaction_id) {
+async function generate_otp(encrypted_pin, phone_number){
+    /* 
+        Customer has to generate an OTP for payment 
+        Params:
+            encryptedPin <string> : RSA encoded pin of the client
+            phone_number <string>: Local phone_number 
+        Returns:
+            response object
+    */
+    const token = await authenticate()
+    try{
+        const data = {"encryptedPinCode": encrypted_pin, "id": phone_number, "idType": "MSISDN"}
+        console.log(data)
+        const response = await axios.post(`${process.env.OM_BASE_URL}/api/eWallet/v1/payments/otp`, data, {'headers': {'Authorization': `Bearer ${token}`}})
+        console.log(`otp result ${JSON.stringify(response.data)}`)
+        return response.data.otp
+    }catch(error){
+        console.log(`OTP error ${error}`)
+    }
+}
+
+async function payout(user_number, merchand_number, amount, encrypted_pin, reference){
+    const token = await authenticate()
+    const otp_code = await generate_otp(encrypted_pin, user_number)
+    try{
+        const data = {"amount":{"unit": "XOF", "value": amount}, 
+                    "customer": {"id": merchand_number, "idType": "MSISDN"}, 
+                    "method":"QRCODE", 
+                    "partner":{ "idType": "CODE", "id": otp_code, "encryptedPinCode": encrypted_pin},
+                    "reference":reference}
+        console.log(data)
+        const response = await axios.post(`${process.env.OM_BASE_URL}/api/eWallet/v1/payments`, data, {'headers': {'Authorization': `Bearer ${token}`}})
+        console.log(`cash out result ${JSON.stringify(response.data)}`)
+        return response.data
+    }catch(error){
+        console.log(`payout error ${error}`)
+    }
+
+}
+
+async function checkout(user_number, merchand_number, amount, encrypted_pin, transaction_id) {
     /*  
         Orange money make a cash in 
         params:
             senderNumber <string> :  MISDN of the sender 
             customerNumber <string> : string MISDN of the customer
             amount <double> : amount to send 
-            encryptedPin <string> : rsa encoded pin of the sender 
+            encryptedPin <string> : RSA encoded pin of the sender 
             transactionId <string> : transactionId of the intern process
         returns :
             response <dict> : status response of process
   */
     const token = await authenticate()
-    console.log(`Token ${token}`)
     try{
         const data = {
             "partner": {
                 "idType": "MSISDN",
-                "id": sender_number,
+                "id": merchand_number,
                 "encryptedPinCode": encrypted_pin
             },
             "customer": {
                 "idType": "MSISDN",
-                "id":customer_number
+                "id":user_number
             },
             "amount": {
                 "value": amount,
@@ -84,19 +123,15 @@ async function make_cash_in(sender_number, customer_number, amount, encrypted_pi
             "reference": transaction_id,
             "receiveNotification": false
         }
-        console.log(data)
-        axios.post(`${process.env.OM_BASE_URL}/api/eWallet/v1/cashins`, data, {'headers': {'Authorization': `Bearer ${token}`}}).then((result) => {
-            console.log(result.data)
-        }).catch((error) => {
-            console.log(error)
-        })
+        const response = await axios.post(`${process.env.OM_BASE_URL}/api/eWallet/v1/cashins`, data, {'headers': {'Authorization': `Bearer ${token}`}})
         //console.log(`cashin result ${JSON.stringify(result.data)}`)
-        //return result.data
+        return response.data
     }catch(error){
-        console.log(`cashin error ${error}`)
+        console.log(`checkout error ${error}`)
     }
 }
 
 
 const encrypted_pin = "H4y1VHXlHOIcbCzqt3a5qLyhNraloKbrso50hoWbGFSgJxB5YCgBQ3BAeboAEZdPYy9D0+/6H0u6fJBYDV4NQHUsdLQ71vxpwTTDcOnpWEML0bsypHweTVvtqC4tC9lEiW5UHUxZ5U0aUaPTTpn3HksONDNQrEhmIBgWE1a8NGObGvQqoR3+cYUfCc2RSk9VVsRLcLXLkfiqfzKCWmUscuoMjfGZ5pg4SxUNFQ7jYv5Nwu+znecvr1GPyM1MF/7C0gr1VlZRCW668okZ7WoJukMfcrU+2T/jCAIigHCcuHF+Kn6C27hGJoepE0nHtAt73sX1UTKD2zxQr/qO+PNtIA=="
-make_cash_in("771899744", "776928060", 400, encrypted_pin, "TEST0006");
+payout("786175709", "771899943", 1000.0,  encrypted_pin, "OUT003")
+checkout("771899744", "776928060", 300, encrypted_pin, "TEST0006");

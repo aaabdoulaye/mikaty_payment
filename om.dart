@@ -27,7 +27,79 @@ Future<String?> authenticate() async {
   }
 }
 
-Future<void> makeCashIn(String senderNumber, String customerNumber, double amount, String encryptedPin, String transactionId) async {
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
+Future<String?> generateOtp(String encryptedPin, String phoneNumber) async {
+  /*
+      Customer has to generate an OTP for payment 
+      Params:
+          encryptedPin <string> : RSA encoded pin of the client
+          phoneNumber <string>: Local phone_number 
+      Returns:
+          response object
+  */
+  final token = await authenticate();
+  try {
+    final data = {
+      "encryptedPinCode": encryptedPin,
+      "id": phoneNumber,
+      "idType": "MSISDN"
+    };
+    print(data);
+    final response = await http.post(
+      Uri.parse('${String.fromEnvironment('OM_BASE_URL')}/api/eWallet/v1/payments/otp'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json'
+      },
+      body: jsonEncode(data),
+    );
+    print('otp result ${jsonDecode(response.body)}');
+    return jsonDecode(response.body)['otp'];
+  } catch (error) {
+    print('OTP error $error');
+  }
+}
+
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
+Future<dynamic> payout(String userNumber, String merchandNumber, double amount, String encryptedPin, String reference) async {
+  final token = await authenticate();
+  final otpCode = await generateOtp(encryptedPin, userNumber);
+  
+  try {
+    final data = {
+      "amount": {"unit": "XOF", "value": amount},
+      "customer": {"id": merchandNumber, "idType": "MSISDN"},
+      "method": "QRCODE",
+      "partner": {
+        "idType": "CODE",
+        "id": otpCode,
+        "encryptedPinCode": encryptedPin
+      },
+      "reference": reference
+    };
+    
+    print(data);
+    
+    final response = await http.post(
+      Uri.parse('${String.fromEnvironment('OM_BASE_URL')}/api/eWallet/v1/payments'),
+      headers: {'Authorization': 'Bearer $token'},
+      body: jsonEncode(data),
+    );
+    
+    print('cash out result ${response.body}');
+    return jsonDecode(response.body);
+  } catch (error) {
+    print('payout error $error');
+  }
+}
+
+
+
+Future<void> checkout(String senderNumber, String customerNumber, double amount, String encryptedPin, String transactionId) async {
    /*  
     Orange money make a cash in 
     params:
