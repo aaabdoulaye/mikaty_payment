@@ -27,8 +27,6 @@ Future<String?> authenticate() async {
   }
 }
 
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 
 Future<String?> generateOtp(String encryptedPin, String phoneNumber) async {
   /*
@@ -62,30 +60,23 @@ Future<String?> generateOtp(String encryptedPin, String phoneNumber) async {
   }
 }
 
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 
-Future<dynamic> payout(String userNumber, String merchandNumber, double amount, String encryptedPin, String reference) async {
+Future<dynamic> payout(String userNumber, String merchandCode, double amount, String encryptedPin, String reference) async {
   final token = await authenticate();
   final otpCode = await generateOtp(encryptedPin, userNumber);
   
   try {
     final data = {
       "amount": {"unit": "XOF", "value": amount},
-      "customer": {"id": merchandNumber, "idType": "MSISDN"},
-      "method": "QRCODE",
-      "partner": {
-        "idType": "CODE",
-        "id": otpCode,
-        "encryptedPinCode": encryptedPin
-      },
+      "customer": {"id": userNumber, "idType": "MSISDN", "otp": otpCode},
+      "partner": {"idType": "CODE", "id": merchandCode},
       "reference": reference
     };
     
     print(data);
     
     final response = await http.post(
-      Uri.parse('${String.fromEnvironment('OM_BASE_URL')}/api/eWallet/v1/payments'),
+      Uri.parse('${String.fromEnvironment('OM_BASE_URL')}/api/eWallet/v1/payments/onestep'),
       headers: {'Authorization': 'Bearer $token'},
       body: jsonEncode(data),
     );

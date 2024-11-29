@@ -21,7 +21,7 @@ async function authenticate () {
     try{
         const credentials = {'client_id': process.env.OM_CLIENT_ID, 'client_secret': process.env.OM_CLIENT_SECRET, 'grant_type': 'client_credentials'}
         const request = await axios.post(process.env.OM_BASE_URL+"/oauth/token", credentials, {headers: { 'Content-Type': 'application/x-www-form-urlencoded'}})
-        console.log(`authentication data ${JSON.stringify(request.data)}`)
+        //console.log(`authentication data ${JSON.stringify(request.data)}`)
         return request.data.access_token
     }catch(error){
         console.log(`authentication error ${error}`)
@@ -73,17 +73,16 @@ async function generate_otp(encrypted_pin, phone_number){
     }
 }
 
-async function payout(user_number, merchand_number, amount, encrypted_pin, reference){
+async function payout(user_number, merchand_code, amount, encrypted_pin, reference){
     const token = await authenticate()
     const otp_code = await generate_otp(encrypted_pin, user_number)
     try{
         const data = {"amount":{"unit": "XOF", "value": amount}, 
-                    "customer": {"id": merchand_number, "idType": "MSISDN"}, 
-                    "method":"QRCODE", 
-                    "partner":{ "idType": "CODE", "id": otp_code, "encryptedPinCode": encrypted_pin},
+                    "customer": {"id": user_number, "idType": "MSISDN", "otp": otp_code }, 
+                    "partner":{ "idType": "CODE", "id": merchand_code},
                     "reference":reference}
         console.log(data)
-        const response = await axios.post(`${process.env.OM_BASE_URL}/api/eWallet/v1/payments`, data, {'headers': {'Authorization': `Bearer ${token}`}})
+        const response = await axios.post(`${process.env.OM_BASE_URL}/api/eWallet/v1/payments/onestep`, data, {'headers': {'Authorization': `Bearer ${token}`}})
         console.log(`cash out result ${JSON.stringify(response.data)}`)
         return response.data
     }catch(error){
@@ -124,7 +123,7 @@ async function checkout(user_number, merchand_number, amount, encrypted_pin, tra
             "receiveNotification": false
         }
         const response = await axios.post(`${process.env.OM_BASE_URL}/api/eWallet/v1/cashins`, data, {'headers': {'Authorization': `Bearer ${token}`}})
-        //console.log(`cashin result ${JSON.stringify(result.data)}`)
+        console.log(`checkout result ${JSON.stringify(response.data)}`)
         return response.data
     }catch(error){
         console.log(`checkout error ${error}`)
@@ -133,5 +132,5 @@ async function checkout(user_number, merchand_number, amount, encrypted_pin, tra
 
 
 const encrypted_pin = "H4y1VHXlHOIcbCzqt3a5qLyhNraloKbrso50hoWbGFSgJxB5YCgBQ3BAeboAEZdPYy9D0+/6H0u6fJBYDV4NQHUsdLQ71vxpwTTDcOnpWEML0bsypHweTVvtqC4tC9lEiW5UHUxZ5U0aUaPTTpn3HksONDNQrEhmIBgWE1a8NGObGvQqoR3+cYUfCc2RSk9VVsRLcLXLkfiqfzKCWmUscuoMjfGZ5pg4SxUNFQ7jYv5Nwu+znecvr1GPyM1MF/7C0gr1VlZRCW668okZ7WoJukMfcrU+2T/jCAIigHCcuHF+Kn6C27hGJoepE0nHtAt73sX1UTKD2zxQr/qO+PNtIA=="
-payout("786175709", "771899943", 1000.0,  encrypted_pin, "OUT003")
-checkout("771899744", "776928060", 300, encrypted_pin, "TEST0006");
+//payout("786175709", "365815", 1000.0,  encrypted_pin, "OUT003")
+checkout("776928060", "771899902", 269, encrypted_pin, "TEST0038");
