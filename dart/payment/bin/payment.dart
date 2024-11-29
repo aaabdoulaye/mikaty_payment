@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'dart:math';
 
+// replace this with your own credentials
 final WAVE_API_Key = "";
-
 
 final OM_CLIENT_ID = "";
 final OM_CLIENT_SECRET = "";
@@ -12,7 +12,7 @@ final OM_BASE_URL = "https://api.sandbox.orange-sonatel.com/";
 final OM_MERCHAND_CODE = 00000;
 
 
-Future<String?> WaveReceivePayment(int amount, {String? aggregatedMerchantId}) async {
+Future<String?> WaveAskForPayment(int amount, {String? aggregatedMerchantId}) async {
  /* 
     send checkout session 
     params: 
@@ -79,7 +79,9 @@ Future<String?> OMAuthentication() async {
 }
 
 
-Future<dynamic> OMReceivedPayment(double amount) async {
+Future<dynamic> OMAskForpayment(double amount) async {
+  /* Asking for payment the function return an url that will be use by the customer to pay the merchand */
+
   final token = await OMAuthentication();
   dynamic result;
   final data = {
@@ -99,15 +101,14 @@ Future<dynamic> OMReceivedPayment(double amount) async {
   } catch (error) {
     print('receivedPayment error ${jsonEncode(error)}');
   }
-
   print(result);
   return result;
 }
 
 
 
-
+// test Orange money and wave payment 
 void main(List<String> arguments) {
-  WaveReceivePayment(100);
-  OMReceivedPayment(1000);
+  WaveAskForPayment(100);
+  WaveAskForPayment(1000);
 }
