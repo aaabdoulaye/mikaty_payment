@@ -109,6 +109,6 @@ Future<dynamic> OMAskForpayment(double amount) async {
 
 // test Orange money and wave payment 
 void main(List<String> arguments) {
-  WaveAskForPayment(100);
   WaveAskForPayment(1000);
+  OMAskForpayment(1000);
 }
